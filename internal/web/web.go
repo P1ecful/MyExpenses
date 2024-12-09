@@ -26,16 +26,18 @@ func (wc *webcontroller) RegisterRoutes() {
 	wc.app.Post("/transaction", func(c *fiber.Ctx) error {
 		var req requests.AddExpenseRequest
 		if err := c.BodyParser(&req); err != nil {
-			panic(err)
+			wc.log.Debug("failed /transaction",
+				zap.Field(zap.Error(err)))
 		}
 
 		return c.JSON(wc.srv.AddExpense(&req))
 	})
 
-	wc.app.Get("/transactions", func(c *fiber.Ctx) error {
+	wc.app.Get("/history", func(c *fiber.Ctx) error {
 		var req int
 		if err := c.BodyParser(&req); err != nil {
-			panic(err)
+			wc.log.Debug("failed /history",
+				zap.Field(zap.Error(err)))
 		}
 
 		return c.JSON(wc.srv.Transactions(req))
@@ -44,7 +46,8 @@ func (wc *webcontroller) RegisterRoutes() {
 	wc.app.Get("/balance", func(c *fiber.Ctx) error {
 		var req int
 		if err := c.BodyParser(&req); err != nil {
-			panic(err)
+			wc.log.Debug("failed /balance",
+				zap.Field(zap.Error(err)))
 		}
 
 		return c.JSON(wc.srv.GetBalance(req))

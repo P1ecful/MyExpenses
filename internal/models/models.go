@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// TransactionModel is structure of database fields
 type TransactionModel struct {
 	UserID        int        `json:"user_id"`
 	TransactionID int        `json:"transaction_id"`

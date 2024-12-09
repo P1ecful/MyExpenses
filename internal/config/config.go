@@ -12,7 +12,7 @@ type PSQLConnection struct {
 	Username string
 }
 
-// ExchangeAPIConvert is request-model to ExchangeRates API
+// ExchangeAPIConvert is request-model for ExchangeRates API
 type ExchangeAPIConvert struct {
 	AccessToken string
 	From        string
