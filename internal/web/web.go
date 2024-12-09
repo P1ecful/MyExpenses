@@ -2,6 +2,7 @@ package web
 
 import (
 	"transaction/internal/service"
+	"transaction/internal/web/requests"
 
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
@@ -23,7 +24,7 @@ func CreateNewWebController(log *zap.Logger, srv service.Service, app *fiber.App
 
 func (wc *webcontroller) RegisterRoutes() {
 	wc.app.Post("/transaction", func(c *fiber.Ctx) error {
-		var req service.AddExpenseRequest
+		var req requests.AddExpenseRequest
 		if err := c.BodyParser(&req); err != nil {
 			panic(err)
 		}
@@ -32,21 +33,21 @@ func (wc *webcontroller) RegisterRoutes() {
 	})
 
 	wc.app.Get("/transactions", func(c *fiber.Ctx) error {
-		var req service.IdRequest
+		var req int
 		if err := c.BodyParser(&req); err != nil {
 			panic(err)
 		}
 
-		return c.JSON(wc.srv.Transactions(&req))
+		return c.JSON(wc.srv.Transactions(req))
 	})
 
 	wc.app.Get("/balance", func(c *fiber.Ctx) error {
-		var req service.IdRequest
+		var req int
 		if err := c.BodyParser(&req); err != nil {
 			panic(err)
 		}
 
-		return c.JSON(wc.srv.GetBalance(&req))
+		return c.JSON(wc.srv.GetBalance(req))
 	})
 
 	wc.app.Get("/exchange-rates", func(c *fiber.Ctx) error {

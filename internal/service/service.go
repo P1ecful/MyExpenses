@@ -1,17 +1,17 @@
 package service
 
 import (
-	"transaction/internal/models"
 	"transaction/internal/repository"
+	"transaction/internal/web/requests"
 
 	"go.uber.org/zap"
 )
 
 type Service interface {
-	AddExpense(req *AddExpenseRequest) *Response
-	ExchangeRates() *ExchangeRatesResponse
-	Transactions(req *IdRequest) *TransactionsResponse
-	GetBalance(req *IdRequest) *BalanceResponse
+	AddExpense(req *requests.AddExpenseRequest) *requests.Response
+	ExchangeRates() *requests.ExchangeRatesResponse
+	Transactions(id int) *requests.TransactionsResponse
+	GetBalance(id int) *requests.BalanceResponse
 }
 
 type service struct {
@@ -26,48 +26,18 @@ func CreateNewService(log *zap.Logger, repo repository.Repository) *service {
 	}
 }
 
-type AddExpenseRequest struct {
-	Amount   int `json:"amount"`
-	Currency int `json:"currency"`
-	Category int `json:"category"`
-	Type     int `json:"type"`
+func (s *service) AddExpense(req *requests.AddExpenseRequest) *requests.Response {
+	return &requests.Response{}
 }
 
-type IdRequest struct {
-	UserID int `jsob:"user_id"`
+func (s *service) ExchangeRates() *requests.ExchangeRatesResponse {
+	return &requests.ExchangeRatesResponse{}
 }
 
-type TransactionsResponse struct {
-	Transaction *models.TransactionModel `json:"transaction"`
+func (s *service) GetBalance(id int) *requests.BalanceResponse {
+	return &requests.BalanceResponse{}
 }
 
-type ExchangeRatesResponse struct {
-	BaseCurrency string             `json:"base_currency"`
-	Rates        map[string]float64 `json:"rates"`
-}
-
-type BalanceResponse struct {
-	Currency int     `json:"currency"`
-	Balance  float64 `json:"balance"`
-}
-
-type Response struct {
-	TransactionID int    `json:"transaction_id"`
-	Message       string `json:"message"`
-}
-
-func (s *service) AddExpense(req *AddExpenseRequest) *Response {
-	return &Response{}
-}
-
-func (s *service) ExchangeRates() *ExchangeRatesResponse {
-	return &ExchangeRatesResponse{}
-}
-
-func (s *service) GetBalance(req *IdRequest) *BalanceResponse {
-	return &BalanceResponse{}
-}
-
-func (s *service) Transactions(req *IdRequest) *TransactionsResponse {
-	return &TransactionsResponse{}
+func (s *service) Transactions(id int) *requests.TransactionsResponse {
+	return &requests.TransactionsResponse{}
 }
