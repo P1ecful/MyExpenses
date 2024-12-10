@@ -26,7 +26,7 @@ func (wc *webcontroller) RegisterRoutes() {
 	wc.app.Post("/transaction", func(c *fiber.Ctx) error {
 		var req requests.AddExpenseRequest
 		if err := c.BodyParser(&req); err != nil {
-			wc.log.Debug("failed /transaction",
+			wc.log.Debug("Failed path: /transaction",
 				zap.Field(zap.Error(err)))
 		}
 
@@ -36,7 +36,7 @@ func (wc *webcontroller) RegisterRoutes() {
 	wc.app.Get("/history", func(c *fiber.Ctx) error {
 		var req int
 		if err := c.BodyParser(&req); err != nil {
-			wc.log.Debug("failed /history",
+			wc.log.Debug("Failed path: /history",
 				zap.Field(zap.Error(err)))
 		}
 
@@ -46,7 +46,7 @@ func (wc *webcontroller) RegisterRoutes() {
 	wc.app.Get("/balance", func(c *fiber.Ctx) error {
 		var req int
 		if err := c.BodyParser(&req); err != nil {
-			wc.log.Debug("failed /balance",
+			wc.log.Debug("Failed path: /balance",
 				zap.Field(zap.Error(err)))
 		}
 

@@ -35,7 +35,7 @@ func main() {
 	})
 
 	repo := postgres.ConnectRepository() // connecting database
-	logger.Info("Database connected")
+	logger.Debug("Database connected")
 
 	wApp := fiber.New()                                 // fiber init
 	srv := service.CreateNewService(logger, postgres)   // service init
@@ -45,7 +45,7 @@ func main() {
 	// start service and graceful shutdown
 	go func() {
 		if err := wApp.Listen(os.Getenv("SERVICE_PORT")); err != nil {
-			logger.Fatal("Can`t shutdown service",
+			logger.Fatal("Can't shutdown service",
 				zap.Field(zap.Error(err)))
 		}
 	}()
@@ -55,7 +55,7 @@ func main() {
 
 	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	repo.Close() // close database
-	logger.Info("Database disconnected")
+	logger.Debug("Database disconnected")
 	defer cancel()
 
 	if err := wApp.Shutdown(); err != nil { // try to stop server
@@ -64,5 +64,5 @@ func main() {
 		return
 	}
 
-	logger.Info("Server stopped")
+	logger.Debug("Server stopped")
 }
