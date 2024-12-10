@@ -28,10 +28,10 @@ func main() {
 
 	postgres := repository.CreatePostgresRepository(logger, &config.PSQLConnection{
 		Host:     os.Getenv("DATABASE_HOST"),
-		Port:     os.Getenv("POSTGRES_PORT"),
-		Database: os.Getenv("POSTGRES_DB"),
-		Password: os.Getenv("POSTGRES_PASSWORD"),
-		Username: os.Getenv("POSTGRES_USER"),
+		Port:     os.Getenv("DATABASE_PORT"),
+		Database: os.Getenv("DATABASE_TABLE"),
+		Password: os.Getenv("DATABASE_PASSWORD"),
+		Username: os.Getenv("DATABASE_USER"),
 	})
 
 	repo := postgres.ConnectRepository() // connecting database
@@ -45,13 +45,13 @@ func main() {
 	// start service and graceful shutdown
 	go func() {
 		if err := wApp.Listen(os.Getenv("SERVICE_PORT")); err != nil {
-			signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-			<-quit
-
 			logger.Fatal("Can`t shutdown service",
 				zap.Field(zap.Error(err)))
 		}
 	}()
+
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
 
 	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	repo.Close() // close database

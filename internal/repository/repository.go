@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"time"
 	"transaction/internal/config"
 	"transaction/internal/models"
 	"transaction/internal/web/requests"
@@ -33,12 +32,9 @@ func CreatePostgresRepository(log *zap.Logger, cfg *config.PSQLConnection) *post
 }
 
 func (p *postgres) ConnectRepository() *pgxpool.Pool {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	pool, err := pgxpool.New(ctx,
+	pool, err := pgxpool.New(context.Background(),
 		fmt.Sprintf(
-			"postgres://%s:%s@%s:%s/%s",
+			"postgresql://%s:%s@%s:%s/%s",
 			p.config.Username, p.config.Password, p.config.Host,
 			p.config.Port, p.config.Database,
 		))
@@ -48,7 +44,7 @@ func (p *postgres) ConnectRepository() *pgxpool.Pool {
 			zap.Field(zap.Error(err)))
 	}
 
-	if err := pool.Ping(ctx); err != nil {
+	if err := pool.Ping(context.Background()); err != nil {
 		p.logger.Fatal("failed to ping database",
 			zap.Field(zap.Error(err)))
 	}
