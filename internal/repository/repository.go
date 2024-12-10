@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 	"transaction/internal/config"
 	"transaction/internal/models"
 	"transaction/internal/web/requests"
@@ -12,73 +13,59 @@ import (
 )
 
 type Repository interface {
-	ConnectRepository(ctx context.Context) error
-	AddTransaction(ctx context.Context, t *requests.AddExpenseRequest) error
-	CheckTransactions(ctx context.Context, id int) ([]models.TransactionModel, error)
-	CheckBalance(ctx context.Context, id int) (string, float64, error)
+	ConnectRepository() *pgxpool.Pool
+	AddTransaction(req *requests.AddExpenseRequest) error
+	CheckTransactions(id int) ([]models.TransactionModel, error)
+	CheckBalance(id int) (string, float64, error)
 	MigrateRepository()
-	CloseRepository()
 }
 
 type postgres struct {
 	logger *zap.Logger
-	repo   *pgxpool.Pool
 	config *config.PSQLConnection
 }
 
-func CreatePostgresRepository(log *zap.Logger, repo *pgxpool.Pool, cfg *config.PSQLConnection) *postgres {
+func CreatePostgresRepository(log *zap.Logger, cfg *config.PSQLConnection) *postgres {
 	return &postgres{
 		logger: log,
-		repo:   repo,
 		config: cfg,
 	}
 }
 
-func (p *postgres) ConnectRepository(ctx context.Context) error {
+func (p *postgres) ConnectRepository() *pgxpool.Pool {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	pool, err := pgxpool.New(ctx,
 		fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-			p.config.Host, p.config.Port, p.config.Username,
-			p.config.Password, p.config.Database,
+			"postgres://%s:%s@%s:%s/%s",
+			p.config.Username, p.config.Password, p.config.Host,
+			p.config.Port, p.config.Database,
 		))
 
 	if err != nil {
-		p.logger.Debug("unable to create connection pool",
-			zap.Field(zap.Error(err)),
-		)
-
-	}
-
-	if err := pool.Ping(ctx); err != nil {
-		p.logger.Debug("failes to ping database",
+		p.logger.Fatal("unable to create connection pool",
 			zap.Field(zap.Error(err)))
 	}
 
+	if err := pool.Ping(ctx); err != nil {
+		p.logger.Fatal("failed to ping database",
+			zap.Field(zap.Error(err)))
+	}
+
+	return pool
+}
+
+func (p *postgres) AddTransaction(req *requests.AddExpenseRequest) error {
 	return nil
 }
 
-func (p *postgres) AddTransaction(ctx context.Context, t *requests.AddExpenseRequest) error {
-	query := `insert into ExchangeCur () values ()`
-	fmt.Println(query)
-
-	return nil
+func (p *postgres) CheckTransactions(id int) ([]models.TransactionModel, error) {
+	return nil, nil
 }
 
-func (p *postgres) CheckTransactions(ctx context.Context, id int) ([]models.TransactionModel, error) {
-	transactions := []models.TransactionModel{}
-
-	return transactions, nil
-}
-
-func (p *postgres) CheckBalance(ctx context.Context, id int) (string, float64, error) {
-	cur := "USD"
-	bal := 10.65
-
-	return cur, bal, nil
-}
-
-func (p *postgres) CloseRepository() {
-	p.repo.Close()
+func (p *postgres) CheckBalance(id int) (string, float64, error) {
+	return "", 1.05, nil
 }
 
 func (p *postgres) MigrateRepository() {}

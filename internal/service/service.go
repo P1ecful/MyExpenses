@@ -27,7 +27,9 @@ func CreateNewService(log *zap.Logger, repo repository.Repository) *service {
 }
 
 func (s *service) AddExpense(req *requests.AddExpenseRequest) *requests.Response {
-	return &requests.Response{}
+	return &requests.Response{
+		Message: "Allowed",
+	}
 }
 
 func (s *service) ExchangeRates() *requests.ExchangeRatesResponse {
