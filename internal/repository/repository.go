@@ -3,65 +3,112 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 	"transaction/internal/config"
 	"transaction/internal/models"
 	"transaction/internal/web/requests"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
+	"golang.org/x/exp/rand"
 )
 
 type Repository interface {
-	ConnectRepository() *pgxpool.Pool
-	AddTransaction(req *requests.AddExpenseRequest) error
-	CheckTransactions(id int) ([]models.TransactionModel, error)
-	CheckBalance(id int) (string, float64, error)
-	MigrateRepository()
+	AddTransaction(ctx context.Context, req *requests.AddExpenseRequest) int
+	CheckTransactions(ctx context.Context, user_id int) []models.TransactionModel
+	CheckBalance(ctx context.Context, user_id int) (string, float64, error)
+	Disconnect()
 }
 
-type postgres struct {
+type pgxstorage struct {
 	logger *zap.Logger
 	config *config.PSQLConnection
+	pool   *pgxpool.Pool
 }
 
-func CreatePostgresRepository(log *zap.Logger, cfg *config.PSQLConnection) *postgres {
-	return &postgres{
-		logger: log,
-		config: cfg,
-	}
-}
+// CreatePGXConnection is method to create connetion and database image
+func CreatePGXConnection(logger *zap.Logger,
+	config *config.PSQLConnection) *pgxstorage {
 
-func (p *postgres) ConnectRepository() *pgxpool.Pool {
 	pool, err := pgxpool.New(context.Background(),
 		fmt.Sprintf(
 			"postgresql://%s:%s@%s:%s/%s",
-			p.config.Username, p.config.Password, p.config.Host,
-			p.config.Port, p.config.Database,
+			config.Username, config.Password, config.Host,
+			config.Port, config.Database,
 		))
 
 	if err != nil {
-		p.logger.Fatal("unable to create connection pool",
+		logger.Fatal("unable to create connection pool",
 			zap.Field(zap.Error(err)))
 	}
 
 	if err := pool.Ping(context.Background()); err != nil {
-		p.logger.Fatal("failed to ping database",
+		logger.Fatal("failed to ping database",
 			zap.Field(zap.Error(err)))
 	}
 
-	return pool
+	logger.Debug("Database connected")
+
+	return &pgxstorage{
+		logger: logger,
+		config: config,
+		pool:   pool,
+	}
 }
 
-func (p *postgres) AddTransaction(req *requests.AddExpenseRequest) error {
-	return nil
+// AddTransaction is method for add transaction in database
+func (p *pgxstorage) AddTransaction(ctx context.Context, req *requests.AddExpenseRequest) int {
+	rand.Seed(uint64(time.Now().Unix())) // init random seed
+	trans_id := rand.Intn(999999)
+
+	query := `insert into transactions 
+	(id, user_id, amount, currency, category, type) values
+	(@id, @user_id, @amount, @currency, @category, @type)`
+
+	// user_id is const. All time user_id = 1
+	args := pgx.NamedArgs{
+		"id":       trans_id,
+		"user_id":  1,
+		"amount":   req.Amount,
+		"currency": req.Currency,
+		"category": req.Category,
+		"type":     req.Type,
+	}
+
+	// Insert into database
+	_, err := p.pool.Exec(ctx, query, args)
+	if err != nil {
+		p.logger.Fatal("Failed insert into database",
+			zap.Field(zap.Error(err)))
+	}
+
+	p.logger.Debug(fmt.Sprintf("Succesful insert %d", trans_id))
+	return trans_id
 }
 
-func (p *postgres) CheckTransactions(id int) ([]models.TransactionModel, error) {
-	return nil, nil
+// CheckTransactions is method to get all transactions
+func (p *pgxstorage) CheckTransactions(ctx context.Context, user_id int) []models.TransactionModel {
+	var transactions []models.TransactionModel
+	// query := `select * from transations where user_id = @user_id`
+	// args := pgx.NamedArgs{
+	// 	"user_id": user_id,
+	// }
+
+	p.logger.Debug(fmt.Sprintf("Check transactions succesful for user: %d", user_id))
+	return transactions
 }
 
-func (p *postgres) CheckBalance(id int) (string, float64, error) {
-	return "", 1.05, nil
+// CheckBalance is method for checking balance by user_id
+func (p *pgxstorage) CheckBalance(ctx context.Context, user_id int) (string, float64, error) {
+	var balance float64
+	// query := `select * from transactions where user_id = 1`
+
+	p.logger.Debug(fmt.Sprintf("Check balance succesful for user: %d", user_id))
+	return "fd", balance, nil
 }
 
-func (p *postgres) MigrateRepository() {}
+// Disconnect is method to close database connection
+func (p *pgxstorage) Disconnect() {
+	p.pool.Close()
+}

@@ -33,17 +33,17 @@ func (wc *webcontroller) RegisterRoutes() {
 		return c.JSON(wc.srv.AddExpense(&req))
 	})
 
-	wc.app.Get("/history", func(c *fiber.Ctx) error {
-		var req int
+	wc.app.Post("/transactions", func(c *fiber.Ctx) error {
+		var req requests.UserIdRequest
 		if err := c.BodyParser(&req); err != nil {
-			wc.log.Debug("Failed path: /history",
+			wc.log.Debug("Failed path: /transactions",
 				zap.Field(zap.Error(err)))
 		}
 
-		return c.JSON(wc.srv.Transactions(req))
+		return c.JSON(wc.srv.Transactions(req.UserId))
 	})
 
-	wc.app.Get("/balance", func(c *fiber.Ctx) error {
+	wc.app.Post("/balance", func(c *fiber.Ctx) error {
 		var req int
 		if err := c.BodyParser(&req); err != nil {
 			wc.log.Debug("Failed path: /balance",

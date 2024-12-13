@@ -17,6 +17,7 @@ import (
 )
 
 func init() {
+	// loading env file with service, database configuration
 	if err := godotenv.Load("config/local.env"); err != nil {
 		panic(err)
 	}
@@ -24,9 +25,8 @@ func init() {
 
 func main() {
 	var logger, _ = zap.NewDevelopment() // logger init
-	quit := make(chan os.Signal, 1)      // creating quit goroutine
 
-	postgres := repository.CreatePostgresRepository(logger, &config.PSQLConnection{
+	postgres := repository.CreatePGXConnection(logger, &config.PSQLConnection{
 		Host:     os.Getenv("DATABASE_HOST"),
 		Port:     os.Getenv("DATABASE_PORT"),
 		Database: os.Getenv("DATABASE_TABLE"),
@@ -34,13 +34,12 @@ func main() {
 		Username: os.Getenv("DATABASE_USER"),
 	})
 
-	repo := postgres.ConnectRepository() // connecting database
-	logger.Debug("Database connected")
-
 	wApp := fiber.New()                                 // fiber init
 	srv := service.CreateNewService(logger, postgres)   // service init
 	wc := web.CreateNewWebController(logger, srv, wApp) // web controller init
 	wc.RegisterRoutes()                                 // registering handlers
+
+	quit := make(chan os.Signal, 1) // creating quit goroutine
 
 	// start service and graceful shutdown
 	go func() {
@@ -54,7 +53,7 @@ func main() {
 	<-quit
 
 	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	repo.Close() // close database
+	postgres.Disconnect() // close database
 	logger.Debug("Database disconnected")
 	defer cancel()
 
