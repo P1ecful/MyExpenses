@@ -17,7 +17,7 @@ import (
 type Repository interface {
 	AddTransaction(ctx context.Context, req *requests.AddExpenseRequest) int
 	CheckTransactions(ctx context.Context, user_id int) []models.TransactionModel
-	CheckBalance(ctx context.Context, user_id int) (string, float64, error)
+	CheckBalance(ctx context.Context, user_id int) float64
 	Disconnect()
 }
 
@@ -90,22 +90,66 @@ func (p *pgxstorage) AddTransaction(ctx context.Context, req *requests.AddExpens
 // CheckTransactions is method to get all transactions
 func (p *pgxstorage) CheckTransactions(ctx context.Context, user_id int) []models.TransactionModel {
 	var transactions []models.TransactionModel
-	// query := `select * from transations where user_id = @user_id`
-	// args := pgx.NamedArgs{
-	// 	"user_id": user_id,
-	// }
+	query := `select * from transactions where user_id = $1`
 
-	p.logger.Debug(fmt.Sprintf("Check transactions succesful for user: %d", user_id))
+	rows, err := p.pool.Query(ctx, query, user_id)
+
+	if err != nil {
+		p.logger.Debug("Failed get transactions",
+			zap.Field(zap.Error(err)))
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var transaction models.TransactionModel
+		if err := rows.Scan(
+			&transaction.UserID,
+			&transaction.TransactionID,
+			&transaction.Amount,
+			&transaction.Currency,
+			&transaction.Category,
+			&transaction.Category,
+			&transaction.Date); err != nil {
+
+			p.logger.Debug("Failed scan transactions",
+				zap.Field(zap.Error(err)))
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	p.logger.Debug(fmt.Sprintf("User: %d checked transaction history", user_id))
 	return transactions
 }
 
 // CheckBalance is method for checking balance by user_id
-func (p *pgxstorage) CheckBalance(ctx context.Context, user_id int) (string, float64, error) {
+func (p *pgxstorage) CheckBalance(ctx context.Context, user_id int) float64 {
 	var balance float64
-	// query := `select * from transactions where user_id = 1`
+	query := `select amount from transactions where user_id = $1 and type = 'income'`
 
-	p.logger.Debug(fmt.Sprintf("Check balance succesful for user: %d", user_id))
-	return "fd", balance, nil
+	rows, err := p.pool.Query(ctx, query, user_id)
+
+	if err != nil {
+		p.logger.Debug("Failed get transactions",
+			zap.Field(zap.Error(err)))
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var income float64
+
+		if err := rows.Scan(&income); err != nil {
+			p.logger.Debug("Failed scan transactions",
+				zap.Field(zap.Error(err)))
+		}
+
+		balance += income
+	}
+
+	p.logger.Debug(fmt.Sprintf("User: %d Checked balance", user_id))
+	return balance
 }
 
 // Disconnect is method to close database connection

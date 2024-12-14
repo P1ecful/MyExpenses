@@ -10,7 +10,6 @@ import (
 
 type Service interface {
 	AddExpense(req *requests.AddExpenseRequest) *requests.Response
-	ExchangeRates() *requests.ExchangeRatesResponse
 	Transactions(id int) *requests.TransactionsResponse
 	GetBalance(id int) *requests.BalanceResponse
 }
@@ -37,28 +36,14 @@ func (s *service) AddExpense(req *requests.AddExpenseRequest) *requests.Response
 	}
 }
 
-// ExchangeRates is method to get exchange rate from USD to other currencies
-func (s *service) ExchangeRates() *requests.ExchangeRatesResponse {
-	rates := make(map[string]float64)
-
-	//
-	//		Add method pls
-	//
-
-	return &requests.ExchangeRatesResponse{
-		BaseCurrency: "USD",
-		Rates:        rates,
-	}
-}
-
 // GetBalance method to check user's balance
 func (s *service) GetBalance(id int) *requests.BalanceResponse {
+	balance := s.repo.CheckBalance(context.Background(), id)
 
-	//
-	// Add method pls
-	//
-
-	return &requests.BalanceResponse{}
+	return &requests.BalanceResponse{
+		Currency: "USD",
+		Balance:  balance,
+	}
 }
 
 // Transactions is method to get all user's transactions

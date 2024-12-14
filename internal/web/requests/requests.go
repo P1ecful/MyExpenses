@@ -28,7 +28,7 @@ type ExchangeRatesResponse struct {
 
 // BalanceResponse is response struct of getting users's balance
 type BalanceResponse struct {
-	Currency int     `json:"currency"`
+	Currency string  `json:"currency"`
 	Balance  float64 `json:"balance"`
 }
 

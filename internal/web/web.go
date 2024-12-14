@@ -44,16 +44,12 @@ func (wc *webcontroller) RegisterRoutes() {
 	})
 
 	wc.app.Post("/balance", func(c *fiber.Ctx) error {
-		var req int
+		var req requests.UserIdRequest
 		if err := c.BodyParser(&req); err != nil {
 			wc.log.Debug("Failed path: /balance",
 				zap.Field(zap.Error(err)))
 		}
 
-		return c.JSON(wc.srv.GetBalance(req))
-	})
-
-	wc.app.Get("/exchange-rates", func(c *fiber.Ctx) error {
-		return c.JSON(wc.srv.ExchangeRates())
+		return c.JSON(wc.srv.GetBalance(req.UserId))
 	})
 }
