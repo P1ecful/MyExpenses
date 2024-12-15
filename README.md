@@ -8,6 +8,6 @@ The following functions are a set for creating this web APIs:
 ## API Routes
 | Path          | Method | Request/Exmaple               |  Desription                                           |                                    
 | ------------- | ------ | ----------------------------- | ----------------------------------------------------- |
-| /transaction   | POST  | {"amount": 10.5, "currency": "USD", "category": "fastfood", "type": "expense"} | Add transaction |   
-| /transactions  | POST  | { "user_id": 1 }              | Chech transactions history                            |     
-| /balance   | POST  | { "ID": 0, "Name": "John" }       | Check balance                                         |      
+| /transaction  | POST   | {"amount": 10.5, "currency": "USD", "category": "fastfood", "type": "expense"} | Add transaction |   
+| /transactions | POST   | { "user_id": 1 }              | Chech transactions history                            |     
+| /balance      | POST   | { "user_id": 1 }              | Check balance                                         |      
