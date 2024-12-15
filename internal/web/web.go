@@ -8,26 +8,25 @@ import (
 	"go.uber.org/zap"
 )
 
-type webcontroller struct {
+type Controller struct {
 	log *zap.Logger
 	app *fiber.App
-	srv service.Service
+	srv service.Transactions
 }
 
-func CreateNewWebController(log *zap.Logger, srv service.Service, app *fiber.App) *webcontroller {
-	return &webcontroller{
+func CreateNewWebController(log *zap.Logger, srv service.Transactions, app *fiber.App) *Controller {
+	return &Controller{
 		log: log,
 		app: app,
 		srv: srv,
 	}
 }
 
-func (wc *webcontroller) RegisterRoutes() {
+func (wc *Controller) RegisterRoutes() {
 	wc.app.Post("/transaction", func(c *fiber.Ctx) error {
 		var req requests.AddExpenseRequest
 		if err := c.BodyParser(&req); err != nil {
-			wc.log.Debug("Failed path: /transaction",
-				zap.Field(zap.Error(err)))
+			wc.log.Debug("Failed path: /transaction", zap.Error(err))
 		}
 
 		return c.JSON(wc.srv.AddExpense(&req))
@@ -36,8 +35,7 @@ func (wc *webcontroller) RegisterRoutes() {
 	wc.app.Post("/transactions", func(c *fiber.Ctx) error {
 		var req requests.UserIdRequest
 		if err := c.BodyParser(&req); err != nil {
-			wc.log.Debug("Failed path: /transactions",
-				zap.Field(zap.Error(err)))
+			wc.log.Debug("Failed path: /transactions", zap.Error(err))
 		}
 
 		return c.JSON(wc.srv.Transactions(req.UserId))
@@ -46,8 +44,7 @@ func (wc *webcontroller) RegisterRoutes() {
 	wc.app.Post("/balance", func(c *fiber.Ctx) error {
 		var req requests.UserIdRequest
 		if err := c.BodyParser(&req); err != nil {
-			wc.log.Debug("Failed path: /balance",
-				zap.Field(zap.Error(err)))
+			wc.log.Debug("Failed path: /balance", zap.Error(err))
 		}
 
 		return c.JSON(wc.srv.GetBalance(req.UserId))

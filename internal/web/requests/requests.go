@@ -26,7 +26,7 @@ type ExchangeRatesResponse struct {
 	Rates        map[string]float64 `json:"rates"`
 }
 
-// BalanceResponse is response struct of getting users's balance
+// BalanceResponse is response struct of getting users' balance
 type BalanceResponse struct {
 	Currency string  `json:"currency"`
 	Balance  float64 `json:"balance"`

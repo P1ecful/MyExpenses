@@ -45,7 +45,7 @@ func main() {
 	go func() {
 		if err := wApp.Listen(os.Getenv("SERVICE_PORT")); err != nil {
 			logger.Fatal("Can't shutdown service",
-				zap.Field(zap.Error(err)))
+				zap.Error(err))
 		}
 	}()
 

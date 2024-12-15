@@ -1,8 +1,5 @@
 package config
 
-// CurrencyURL is URL to get exchange rates
-var CurrencyURL string = "http://api.exchangeratesapi.io/v1/"
-
 // PSQLConnection need for Postgres connection
 type PSQLConnection struct {
 	Host     string

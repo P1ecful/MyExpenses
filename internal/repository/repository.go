@@ -16,20 +16,20 @@ import (
 
 type Repository interface {
 	AddTransaction(ctx context.Context, req *requests.AddExpenseRequest) int
-	CheckTransactions(ctx context.Context, user_id int) []models.TransactionModel
-	CheckBalance(ctx context.Context, user_id int) float64
+	CheckTransactions(ctx context.Context, UserID int) []models.TransactionModel
+	CheckBalance(ctx context.Context, UserID int) float64
 	Disconnect()
 }
 
-type pgxstorage struct {
+type Pgxstorage struct {
 	logger *zap.Logger
 	config *config.PSQLConnection
 	pool   *pgxpool.Pool
 }
 
-// CreatePGXConnection is method to create connetion and database image
+// CreatePGXConnection is method to create connection and database image
 func CreatePGXConnection(logger *zap.Logger,
-	config *config.PSQLConnection) *pgxstorage {
+	config *config.PSQLConnection) *Pgxstorage {
 
 	pool, err := pgxpool.New(context.Background(),
 		fmt.Sprintf(
@@ -40,17 +40,17 @@ func CreatePGXConnection(logger *zap.Logger,
 
 	if err != nil {
 		logger.Fatal("unable to create connection pool",
-			zap.Field(zap.Error(err)))
+			zap.Error(err))
 	}
 
 	if err := pool.Ping(context.Background()); err != nil {
 		logger.Fatal("failed to ping database",
-			zap.Field(zap.Error(err)))
+			zap.Error(err))
 	}
 
 	logger.Debug("Database connected")
 
-	return &pgxstorage{
+	return &Pgxstorage{
 		logger: logger,
 		config: config,
 		pool:   pool,
@@ -58,9 +58,9 @@ func CreatePGXConnection(logger *zap.Logger,
 }
 
 // AddTransaction is method for add transaction in database
-func (p *pgxstorage) AddTransaction(ctx context.Context, req *requests.AddExpenseRequest) int {
+func (p *Pgxstorage) AddTransaction(ctx context.Context, req *requests.AddExpenseRequest) int {
 	rand.Seed(uint64(time.Now().Unix())) // init random seed
-	trans_id := rand.Intn(999999)
+	TransID := rand.Intn(999999)
 
 	query := `insert into transactions 
 	(id, user_id, amount, currency, category, type) values
@@ -68,7 +68,7 @@ func (p *pgxstorage) AddTransaction(ctx context.Context, req *requests.AddExpens
 
 	// user_id is const. All time user_id = 1
 	args := pgx.NamedArgs{
-		"id":       trans_id,
+		"id":       TransID,
 		"user_id":  1,
 		"amount":   req.Amount,
 		"currency": req.Currency,
@@ -80,23 +80,23 @@ func (p *pgxstorage) AddTransaction(ctx context.Context, req *requests.AddExpens
 	_, err := p.pool.Exec(ctx, query, args)
 	if err != nil {
 		p.logger.Fatal("Failed insert into database",
-			zap.Field(zap.Error(err)))
+			zap.Error(err))
 	}
 
-	p.logger.Debug(fmt.Sprintf("Succesful insert %d", trans_id))
-	return trans_id
+	p.logger.Debug(fmt.Sprintf("Succesful insert %d", TransID))
+	return TransID
 }
 
 // CheckTransactions is method to get all transactions
-func (p *pgxstorage) CheckTransactions(ctx context.Context, user_id int) []models.TransactionModel {
+func (p *Pgxstorage) CheckTransactions(ctx context.Context, UserID int) []models.TransactionModel {
 	var transactions []models.TransactionModel
 	query := `select * from transactions where user_id = $1`
 
-	rows, err := p.pool.Query(ctx, query, user_id)
+	rows, err := p.pool.Query(ctx, query, UserID)
 
 	if err != nil {
 		p.logger.Debug("Failed get transactions",
-			zap.Field(zap.Error(err)))
+			zap.Error(err))
 	}
 
 	defer rows.Close()
@@ -113,26 +113,26 @@ func (p *pgxstorage) CheckTransactions(ctx context.Context, user_id int) []model
 			&transaction.Date); err != nil {
 
 			p.logger.Debug("Failed scan transactions",
-				zap.Field(zap.Error(err)))
+				zap.Error(err))
 		}
 
 		transactions = append(transactions, transaction)
 	}
 
-	p.logger.Debug(fmt.Sprintf("User: %d checked transaction history", user_id))
+	p.logger.Debug(fmt.Sprintf("User: %d checked transaction history", UserID))
 	return transactions
 }
 
 // CheckBalance is method for checking balance by user_id
-func (p *pgxstorage) CheckBalance(ctx context.Context, user_id int) float64 {
+func (p *Pgxstorage) CheckBalance(ctx context.Context, UserID int) float64 {
 	var balance float64
 	query := `select amount from transactions where user_id = $1 and type = 'income'`
 
-	rows, err := p.pool.Query(ctx, query, user_id)
+	rows, err := p.pool.Query(ctx, query, UserID)
 
 	if err != nil {
 		p.logger.Debug("Failed get transactions",
-			zap.Field(zap.Error(err)))
+			zap.Error(err))
 	}
 
 	defer rows.Close()
@@ -142,17 +142,17 @@ func (p *pgxstorage) CheckBalance(ctx context.Context, user_id int) float64 {
 
 		if err := rows.Scan(&income); err != nil {
 			p.logger.Debug("Failed scan transactions",
-				zap.Field(zap.Error(err)))
+				zap.Error(err))
 		}
 
 		balance += income
 	}
 
-	p.logger.Debug(fmt.Sprintf("User: %d Checked balance", user_id))
+	p.logger.Debug(fmt.Sprintf("User: %d Checked balance", UserID))
 	return balance
 }
 
 // Disconnect is method to close database connection
-func (p *pgxstorage) Disconnect() {
+func (p *Pgxstorage) Disconnect() {
 	p.pool.Close()
 }
